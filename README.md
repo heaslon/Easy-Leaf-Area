@@ -1,5 +1,10 @@
 Easy-Leaf-Area
 ==============
+Easy Leaf Area Free and Canopy Cover Free are now available for android devices.
+https://play.google.com/store/apps/details?id=com.heaslon.EasyLeafArea
+
+https://play.google.com/store/apps/details?id=com.heaslon.canopycover
+
 WHAT IS EASY LEAF AREA?
 Easy leaf area is free, open source, software that rapidly measures leaf area in digital images (photographs or scanner images).  Easy leaf area uses the RGB value of each pixel to identify leaf and scale regions in each image.  After analysis, each highlighted image is written in tiff format to the 'write folder'.  A file named 'leafarea.csv' with image names, leaf pixel counts, scale pixel counts, and leaf area in cm^2 is also written to the 'write folder'. Multiple leaves can be measured in the same image (see MULTIPLE LEAVES section).
 
