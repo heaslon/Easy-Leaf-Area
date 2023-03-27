@@ -2,7 +2,7 @@ Easy-Leaf-Area
 ==============
 2023 updates in progress for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
 
-The Iphone version is currently being tested.  Easy Leaf Area Free for iphone wwill be released in a few months.  
+The Iphone version is currently being tested.  Easy Leaf Area Free for iphone will be released in a few months.  
 
 Android apps compatible with newer phones will be released later this year.
 
