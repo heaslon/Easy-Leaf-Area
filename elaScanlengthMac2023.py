@@ -827,9 +827,9 @@ def auto_Settings(WhatData):
 	pic=pic.resize((int(xsize),int(ysize)))
 	xsize, ysize = pic.size
 	print (xsize,"x", ysize)
-	ratG=2
-	ratGb=1.8
-	minG = 75
+	#ratG=2
+	#ratGb=1.8
+	thresW = 75
 	cnt =0
 	lpcntb = 0
 	lpcnt =-1
@@ -887,7 +887,9 @@ def auto_Settings(WhatData):
 		minRscale.set(255)
 		ratRscale.set(2)
 		print ("No Scale detected")
-	ConsData = [gavg, gravg, bravg, ravg, rgavg]
+	#ConsData = [gavg, gravg, bravg, ravg, rgavg]
+	ConsData = [ravg, rgavg]
+
 	#print ConsData, "Values can be added to calib file"
 	print (ravg, mmrset, bmrset, (mmrset*ravg+bmrset))
 	#ratGbscale.set(0.334*bravg+0.534)
