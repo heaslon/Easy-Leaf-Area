@@ -1,5 +1,19 @@
 Easy-Leaf-Area
 ==============
+Privacy Policy
+
+No data is collected or reported to Easy Leaf Area, but Apple and Google now require a Privacy Policy.  
+
+We take your privacy very seriously. We do not collect, use, or disclose your personal information when you use our applications. By using these apps, you consent to the terms of this Privacy Policy.
+
+Easy Leaf Area Free and Canopy Cover Free require camera and location access in order to calculate leaf area, canopy cover, and location locally on your device.  No data is collected or reported to Easy Leaf Area.
+
+Contact Us
+If you have any questions or concerns about this Privacy Policy or our practices with respect to your personal information, please contact me at heaslon@gmail.com. 
+
+
+
+
 2023 updates in progress for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
 
 The Iphone version is currently being tested.  Easy Leaf Area Free for iphone will be released in a few months.  
