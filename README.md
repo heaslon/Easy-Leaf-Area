@@ -11,12 +11,10 @@ Easy Leaf Area Free and Canopy Cover Free require camera and location access in 
 Contact Us
 If you have any questions or concerns about this Privacy Policy or our practices with respect to your personal information, please contact me at heaslon@gmail.com. 
 
+April 11 2023 - Easy Leaf Area is now available in the App Store for Iphone
+https://apps.apple.com/us/app/easy-leaf-area/id6447322411
 
-
-
-2023 updates in progress for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
-
-The Iphone version is currently being tested.  Easy Leaf Area Free for iphone will be released in a few months.  
+2023 updates completed for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
 
 Android apps compatible with newer phones will be released later this year.
 
