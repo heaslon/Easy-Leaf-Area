@@ -14,6 +14,8 @@ If you have any questions or concerns about this Privacy Policy or our practices
 April 11 2023 - Easy Leaf Area is now available in the App Store for Iphone
 https://apps.apple.com/us/app/easy-leaf-area/id6447322411
 
+Easy Leaf Area App tutorial: https://www.youtube.com/watch?v=HePyToRoa84&t=11s
+
 2023 updates completed for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
 
 Android apps compatible with newer phones will be released later this year.
