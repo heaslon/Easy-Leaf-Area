@@ -11,8 +11,11 @@ Easy Leaf Area Free and Canopy Cover Free require camera and location access in 
 Contact Us
 If you have any questions or concerns about this Privacy Policy or our practices with respect to your personal information, please contact me at heaslon@gmail.com. 
 
-April 11 2023 - Easy Leaf Area is now available in the App Store for Iphone
+April 11 2023 - Easy Leaf Area is now available in the App Store for iPhone
 https://apps.apple.com/us/app/easy-leaf-area/id6447322411
+
+April 14 2023 - Canopy Cover is now available in the App Store for iPhone
+https://apps.apple.com/us/app/canopy-cover/id6447323877
 
 Easy Leaf Area App tutorial: https://www.youtube.com/watch?v=HePyToRoa84&t=11s
 
