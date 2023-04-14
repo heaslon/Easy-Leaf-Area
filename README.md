@@ -17,7 +17,8 @@ https://apps.apple.com/us/app/easy-leaf-area/id6447322411
 April 14 2023 - Canopy Cover is now available in the App Store for iPhone
 https://apps.apple.com/us/app/canopy-cover/id6447323877
 
-Easy Leaf Area App tutorial: https://www.youtube.com/watch?v=HePyToRoa84&t=11s
+Easy Leaf Area App tutorial: https://www.youtube.com/watch?v=HePyToRoa84&t
+Canopy Cover App tutorial: https://www.youtube.com/watch?v=oNxopqB1qY0&t
 
 2023 updates completed for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
 
