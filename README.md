@@ -36,10 +36,14 @@ Easy leaf area is free, open source, software that rapidly measures leaf area in
 GETTING STARTED:
 This program analyzes single jpeg or tiff images or batches of images for leaf area.  Images must have a red scale of known area in the image in the same plane as the leaves for the program to use as a reference scale.  
 
-Windows:
+Windows (2024 updated): ela.exe no longer works on Windows 10 or Windows 11.  You will need to install python and run the script.  I would suggest using elaWin2023.py compatible with Python 3.  Use ChatGPT for instructions on installing Scipy, Numpy, Pillow
+
+Windows (old instructions):
 Download EasyLeafArea.zip and unzip the folder.  https://github.com/heaslon/Easy-Leaf-Area/blob/master/EasyLeafArea.zip .  To download the file click 'view the full file'.  To begin the program, Run ela.exe or ela.py (requires installation of Python® 2.7 ("Python" is a registered trademark of the Python Software Foundation”), Scipy, and Numpy, but you can modify the script to suit your needs).
 
-Mac:
+Mac (2024 updated): the mac executable may no longer work on modern macs.  You will need to install python and run the script.  I would suggest using elaMac2024.py compatible with Python 3.  Use ChatGPT for instructions on installing Scipy, Numpy, Pillow
+
+Mac (old instructions):
 Download mac executable 'ela'  https://github.com/heaslon/Easy-Leaf-Area/blob/master/ela . To download the file click 'view the full file'.  Double click the file to launch easy leaf area.  If the file will not launch due to your security settings follow the instructions here: https://support.apple.com/kb/PH14369?locale=en_US .  If the file opens as a text file, follow the instructions here: http://macosx.com/threads/change-a-plain-text-file-to-unix-executable-file.318118/ .
 
 Windows and Mac:
