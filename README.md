@@ -11,7 +11,7 @@ Easy Leaf Area Free and Canopy Cover Free require camera and location access in 
 Contact Us
 If you have any questions or concerns about this Privacy Policy or our practices with respect to your personal information, please contact me at heaslon@gmail.com. 
 
-Added EasyLeafArea.html. Now you should be able to run it on most any browser without installing python. Just download it and open it with your favorite browser.
+June 2026 - Added EasyLeafArea.html. Now you should be able to run it on most any browser without installing python. Just download it and open it with your favorite browser.
 
 April 11 2023 - Easy Leaf Area is now available in the App Store for iPhone
 https://apps.apple.com/us/app/easy-leaf-area/id6447322411
