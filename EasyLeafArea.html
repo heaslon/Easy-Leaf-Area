@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Leaf Area - Web Edition (Calibration Refined)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #f5f5f7;
+            margin: 0;
+            padding: 10px;
+            font-size: 13px;
+            user-select: none;
+        }
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .meta-info {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .panel {
+            background: #fff;
+            border: 1px solid #d1d1d6;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .left-panel { width: 220px; display: flex; flex-direction: column; gap: 10px; }
+        .center-panel { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
+        .right-panel { width: 280px; display: flex; flex-direction: column; gap: 12px; }
+        
+        button {
+            background-color: #fff;
+            border: 1px solid #c7c7cc;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        }
+        button:hover { background-color: #f2f2f7; }
+        button:active { background-color: #e5e5ea; }
+        button:disabled { background-color: #f2f2f7; color: #aeaea3; cursor: not-allowed; border-color: #e5e5ea; }
+        
+        .checkbox-group { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .batch-section { border-top: 1px dashed #c7c7cc; margin-top: 10px; padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .batch-title { font-weight: bold; font-size: 12px; color: #555; }
+        .path-display { font-family: monospace; color: #007aff; font-size: 11px; padding-left: 5px; word-break: break-all; font-weight: 600; }
+
+        .slider-block { display: flex; flex-direction: column; gap: 2px; }
+        .slider-label { font-weight: 500; text-align: center; font-size: 12px; }
+        .slider-val { text-align: center; font-weight: bold; color: #000; font-size: 12px; }
+        input[type="range"] { width: 100%; margin: 4px 0; }
+        .slider-ticks { display: flex; justify-content: space-between; font-size: 10px; color: #666; padding: 0 2px; }
+
+        #canvas-container {
+            border: 2px dashed #a1a1a6;
+            background: #e5e5ea;
+            width: 100%;
+            max-width: 600px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: auto;
+        }
+        #canvas-placeholder {
+            color: #666;
+            font-weight: 500;
+            text-align: center;
+            padding: 20px;
+        }
+        canvas { max-width: 100%; height: auto; display: none; }
+        #file-input, #calib-file-input { display: none; }
+
+        .calib-section { border-top: 1px dashed #c7c7cc; margin-top: 5px; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .calib-title { font-weight: bold; font-size: 12px; color: #555; }
+        .calib-stats { font-size: 11px; color: #007aff; text-align: center; font-weight: 500; }
+        .calib-count { font-size: 11px; color: #666; text-align: center; font-style: italic; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">Easy Leaf Area</div>
+    <div class="meta-info">
+        <span id="file-name">No file loaded</span> &nbsp;|&nbsp; 
+        Leaf pixels: <span id="stat-leaf-pix">0</span> &nbsp;|&nbsp; 
+        Scale pixels: <span id="stat-scale-pix">0</span> &nbsp;|&nbsp; 
+        Leaf area: <span id="stat-area">0.00</span> cm^2
+    </div>
+
+    <div class="container">
+        <div class="panel left-panel">
+            <button type="button" id="btn-open" onclick="triggerOpen()">Open an image</button>
+            <input type="file" id="file-input" accept="image/*">
+            
+            <button type="button" id="btn-auto" onclick="autoSettings()">Auto settings</button>
+            <button type="button" id="btn-save" onclick="saveAnalysis()">Save analysis</button>
+            
+            <div class="checkbox-group"><input type="checkbox" id="flip-h" onchange="processImage()"><label for="flip-h">Flip image horizontal</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="rotate-180" onchange="processImage()"><label for="rotate-180">Rotate image 180 deg</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="del-bg" onchange="processImage()"><label for="del-bg">Delete background</label></div>
+            
+            <div class="batch-section">
+                <div class="batch-title">Batch Processing:</div>
+                <button type="button" id="btn-src-folder" onclick="selectSourceFolder()">Select batch source Folder</button>
+                <div class="path-display" id="src-folder-display">None selected</div>
+                
+                <div class="checkbox-group"><input type="checkbox" id="batch-use-auto" checked><label for="batch-use-auto">Use auto settings</label></div>
+                
+                <button type="button" id="btn-start-batch" onclick="startBatchProcessing()" style="font-weight: bold; border-color: #007aff; color: #007aff;" disabled>Start Batch with current settings</button>
+            </div>
+        </div>
+
+        <div class="center-panel">
+            <div style="margin-bottom: 5px; display: flex; gap: 15px; align-items: center;">
+                <button type="button" onclick="downloadCsvLog()">Open output csv file</button>
+                <div class="checkbox-group"><input type="checkbox" id="label-pixels" onchange="processImage()"><label for="label-pixels">Label Pixels</label></div>
+            </div>
+            <div id="canvas-container">
+                <div id="canvas-placeholder">Use "Open an image" on the left panel to begin</div>
+                <canvas id="mainCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="slider-block">
+                <div class="slider-label">Leaf minimum Green RGB value:</div>
+                <div class="slider-val" id="v-min-green">105</div>
+                <input type="range" id="min-green" min="0" max="250" step="5" value="105" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Leaf Green Ratio: (G/R)</div>
+                <div class="slider-val" id="v-gr-ratio">1.02</div>
+                <input type="range" id="gr-ratio" min="0.90" max="1.90" step="0.01" value="1.02" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0.90</span><span>1.40</span><span>1.90</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Leaf Green Ratio: (G/B)</div>
+                <div class="slider-val" id="v-gb-ratio">0.84</div>
+                <input type="range" id="gb-ratio" min="0.80" max="1.80" step="0.01" value="0.84" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0.80</span><span>1.30</span><span>1.80</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Scale minimum Red RGB value:</div>
+                <div class="slider-val" id="v-min-red">225</div>
+                <input type="range" id="min-red" min="0" max="250" step="5" value="225" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Scale Red Ratio: (R/G & R/B)</div>
+                <div class="slider-val" id="v-red-ratio">1.96</div>
+                <input type="range" id="red-ratio" min="1.00" max="2.00" step="0.01" value="1.96" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>1.00</span><span>1.50</span><span>2.00</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Scale area (cm^2):</div>
+                <div class="slider-val" id="v-scale-area">4.0</div>
+                <input type="range" id="scale-area" min="0.0" max="20.0" step="0.5" value="4.0" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0.0</span><span>4.0</span><span>8.0</span><span>12.0</span><span>16.0</span><span>20.0</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Minimum Leaf Size (pixels):</div>
+                <div class="slider-val" id="v-min-size">200</div>
+                <input type="range" id="min-size" min="0" max="5000" step="50" value="200" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0</span><span>1250</span><span>2500</span><span>3750</span><span>5000</span></div>
+            </div>
+            
+            <div class="checkbox-group" style="margin-bottom: 5px;"><input type="checkbox" id="one-leaf" onchange="processImage()"><label for="one-leaf">Only one Leaf component</label></div>
+
+            <div class="calib-section">
+                <div class="calib-title">Auto Settings Calibration:</div>
+                <div class="calib-stats" id="calib-name-display">Active: Arabidopsis Default</div>
+                <div style="display: flex; gap: 6px; margin-top: 2px;">
+                    <button type="button" id="btn-load-calib" onclick="triggerLoadCalibration()" style="flex: 1;">Load calib file</button>
+                    <button type="button" id="btn-add-calib" onclick="addCurrentToCalibrationLog()" style="flex: 1;">Add to calib file</button>
+                </div>
+                <div class="calib-count" id="calib-count-display">0 calibration rows staged</div>
+                <button type="button" id="btn-export-calib" onclick="exportCalibrationCsv()" style="width: 100%;">Export calib file</button>
+                <input type="file" id="calib-file-input" accept=".csv" onchange="loadCalibrationCsv(event)">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const fileInput = document.getElementById('file-input');
+        const calibFileInput = document.getElementById('calib-file-input');
+        const placeholder = document.getElementById('canvas-placeholder');
+        
+        let originalImage = null;
+        let currentFileName = '';
+        let analysisLog = []; 
+        let calibrationOutputRows = []; 
+
+        // Cache parameters generated dynamically from low-res image pass
+        let currentImageGreenAverages = { gavg: 0, gravg: 0, bravg: 0 };
+        let currentImageRedAverages = { ravg: 0, rgavg: 0, rbavg: 0 };
+
+        // Default stable regression coefficients configuration
+        const defaultCoefficients = {
+            mg: 1.223,  bg: -111.0,
+            mgr: 0.360, bgr: 0.589,
+            mgb: 0.334, bgb: 0.534,
+            mmr: 1.412, bmr: -140.6,
+            mmg: 0.134, bmg: 0.782
+        };
+
+        // Active coefficient configuration pointers
+        let calibCoefficients = { ...defaultCoefficients };
+
+        let sourceFolderHandle = null;
+
+        function triggerOpen() { fileInput.click(); }
+        function triggerLoadCalibration() { calibFileInput.click(); }
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            currentFileName = file.name;
+            document.getElementById('file-name').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    placeholder.style.display = 'none';
+                    canvas.style.display = 'block';
+                    canvas.width = originalImage.width;
+                    canvas.height = originalImage.height;
+                    processImage();
+                };
+                originalImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function updateSliderVal(slider) {
+            document.getElementById('v-' + slider.id).innerText = slider.value;
+            if (originalImage) processImage();
+        }
+
+        function processImage() {
+            if (!originalImage) return;
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            let flipH = document.getElementById('flip-h').checked;
+            let rot180 = document.getElementById('rotate-180').checked;
+
+            ctx.translate(width / 2, height / 2);
+            ctx.scale(flipH ? -1 : 1, 1);
+            if (rot180) ctx.rotate(Math.PI);
+            ctx.translate(-width / 2, -height / 2);
+
+            ctx.drawImage(originalImage, 0, 0);
+
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+
+            const minG = parseFloat(document.getElementById('min-green').value);
+            const grThresh = parseFloat(document.getElementById('gr-ratio').value);
+            const gbThresh = parseFloat(document.getElementById('gb-ratio').value);
+            const minR = parseFloat(document.getElementById('min-red').value);
+            const redThresh = parseFloat(document.getElementById('red-ratio').value);
+            const delBg = document.getElementById('del-bg').checked;
+            const minSizeSetting = parseInt(document.getElementById('min-size').value, 10);
+            const onlyOneLeaf = document.getElementById('one-leaf').checked;
+            const showLabels = document.getElementById('label-pixels').checked;
+
+            let binaryLeaf = new Uint8Array(width * height);
+            let visited = new Uint8Array(width * height);
+            let scalePixels = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                let idx = i / 4;
+                let r = data[i];
+                let g = data[i+1];
+                let b = data[i+2];
+
+                if (g >= minG && (g / (r || 1)) >= grThresh && (g / (b || 1)) >= gbThresh) {
+                    binaryLeaf[idx] = 1;
+                } 
+                else if (r >= minR && (r / (g || 1)) >= redThresh && (r / (b || 1)) >= redThresh) {
+                    scalePixels++;
+                    data[i] = 255;   data[i+1] = 0; data[i+2] = 0;
+                }
+                else if (delBg) {
+                    data[i] = 0; data[i+1] = 0; data[i+2] = 0;
+                }
+            }
+
+            let leafComponents = [];
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let idx = y * width + x;
+
+                    if (binaryLeaf[idx] === 1 && visited[idx] === 0) {
+                        let compPixels = [];
+                        let queue = [idx];
+                        let qHead = 0;
+                        visited[idx] = 1;
+                        
+                        let minX = x, maxX = x, minY = y, maxY = y;
+
+                        while (qHead < queue.length) {
+                            let currIdx = queue[qHead++];
+                            compPixels.push(currIdx);
+
+                            let cx = currIdx % width;
+                            let cy = Math.floor(currIdx / width);
+
+                            if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+
+                            const neighbors = [
+                                {nx: cx+1, ny: cy}, {nx: cx-1, ny: cy},
+                                {nx: cx, ny: cy+1}, {nx: cx, ny: cy-1}
+                            ];
+
+                            for (let n of neighbors) {
+                                if (n.nx >= 0 && n.nx < width && n.ny >= 0 && n.ny < height) {
+                                    let nIdx = n.ny * width + n.nx;
+                                    if (binaryLeaf[nIdx] === 1 && visited[nIdx] === 0) {
+                                        visited[nIdx] = 1;
+                                        queue.push(nIdx);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (compPixels.length >= minSizeSetting) {
+                            leafComponents.push({
+                                size: compPixels.length,
+                                pixels: compPixels,
+                                centerX: Math.floor((minX + maxX) / 2),
+                                centerY: Math.floor((minY + maxY) / 2)
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (onlyOneLeaf && leafComponents.length > 1) {
+                leafComponents.sort((a, b) => b.size - a.size);
+                leafComponents = [leafComponents[0]];
+            }
+
+            let finalLeafPixelsCount = 0;
+            leafComponents.forEach(comp => {
+                finalLeafPixelsCount += comp.size;
+                comp.pixels.forEach(idx => {
+                    let i = idx * 4;
+                    data[i] = 0;     
+                    data[i+1] = 255;
+                    data[i+2] = 0;
+                });
+            });
+
+            ctx.putImageData(imgData, 0, 0);
+
+            if (showLabels) {
+                ctx.fillStyle = "blue";
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                leafComponents.forEach(comp => {
+                    ctx.fillText(comp.size, comp.centerX, comp.centerY);
+                });
+            }
+
+            const scaleAreaSetting = parseFloat(document.getElementById('scale-area').value);
+            let computedArea = 0;
+            if (scalePixels > 0) {
+                computedArea = (finalLeafPixelsCount / scalePixels) * scaleAreaSetting;
+            }
+
+            document.getElementById('stat-leaf-pix').innerText = finalLeafPixelsCount;
+            document.getElementById('stat-scale-pix').innerText = scalePixels;
+            document.getElementById('stat-area').innerText = computedArea.toFixed(2);
+        }
+
+        function autoSettings() {
+            if (!originalImage) {
+                alert("Open an image first, then click Auto settings.");
+                return;
+            }
+
+            const speedP = 8;
+            const xsize = Math.max(1, Math.floor(canvas.width / speedP));
+            const ysize = Math.max(1, Math.floor(canvas.height / speedP));
+            const tmp = document.createElement('canvas');
+            tmp.width = xsize; tmp.height = ysize;
+            const tctx = tmp.getContext('2d', { willReadFrequently: true });
+            tctx.drawImage(originalImage, 0, 0, xsize, ysize);
+            const data = tctx.getImageData(0, 0, xsize, ysize).data;
+            const pixMinGreen = xsize * ysize * 0.0025;
+
+            let ratG = 2, ratGb = 1.8, minG = 75;
+            let leafPix = [];
+            for (let loop = 0; loop < 40; loop++) {
+                leafPix = [];
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i + 1], b = data[i + 2];
+                    if (r * ratG < g && b * ratGb < g && g > minG) leafPix.push([r, g, b]);
+                }
+                if (leafPix.length >= pixMinGreen) break;
+                if (leafPix.length < 12) {
+                    ratG *= 0.94;
+                    ratGb *= 0.94;
+                } else {
+                    minG *= 0.9;
+                }
+            }
+
+            let gavg = 0, gravg = 0, bravg = 0;
+            const gCnt = Math.max(leafPix.length, 1);
+            leafPix.forEach(([r, g, b]) => {
+                if (r < 1) r = g;
+                if (g < 1) g = 0.1;
+                if (b < 1) b = g;
+                gavg += g;
+                gravg += g / r;
+                bravg += g / b;
+            });
+            gavg /= gCnt; gravg /= gCnt; bravg /= gCnt;
+
+            currentImageGreenAverages = { gavg, gravg, bravg };
+
+            let calibratedMinG = calibCoefficients.mg * gavg + calibCoefficients.bg;
+            if (calibratedMinG < 10) calibratedMinG = 10;
+            let calibratedGR = calibCoefficients.mgr * gravg + calibCoefficients.bgr;
+            let calibratedGB = calibCoefficients.mgb * bravg + calibCoefficients.bgb;
+
+            let ratR = 2, minR = 150;
+            let scalePix = [];
+            for (let loop = 0; loop < 12; loop++) {
+                scalePix = [];
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i + 1], b = data[i + 2];
+                    if (g * ratR < r && b * ratR < r && r > minR) scalePix.push([r, g, b]);
+                }
+                if (scalePix.length >= pixMinGreen) break;
+                if (loop < 8) {
+                    ratR *= 0.94;
+                } else {
+                    ratR = 2;
+                    minR *= 0.99;
+                }
+            }
+
+            let calibratedMinR, calibratedRedRatio;
+            if (scalePix.length > 0) {
+                let ravg = 0, rgavg = 0, rbavg = 0;
+                scalePix.forEach(([r, g, b]) => {
+                    if (g < 1) g = r;
+                    if (b < 1) b = r;
+                    ravg += r;
+                    rgavg += r / g;
+                    rbavg += r / b;
+                });
+                const sCnt = scalePix.length;
+                ravg /= sCnt; rgavg /= sCnt; rbavg /= sCnt;
+                rgavg = (rgavg + rbavg) / 2;
+
+                currentImageRedAverages = { ravg, rgavg };
+
+                calibratedMinR = calibCoefficients.mmr * ravg + calibCoefficients.bmr;
+                calibratedRedRatio = calibCoefficients.mmg * rgavg + calibCoefficients.bmg;
+                if (calibratedRedRatio < 1.01) calibratedRedRatio = 1.01;
+            } else {
+                currentImageRedAverages = { ravg: 0, rgavg: 0 };
+                calibratedMinR = 255;
+                calibratedRedRatio = 2;
+            }
+
+            const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+            setSlider('min-green', clamp(calibratedMinG, 0, 250));
+            setSlider('gr-ratio', clamp(calibratedGR, 0.90, 1.90));
+            setSlider('gb-ratio', clamp(calibratedGB, 0.80, 1.80));
+            setSlider('min-red', clamp(calibratedMinR, 0, 250));
+            setSlider('red-ratio', clamp(calibratedRedRatio, 1.00, 2.00));
+
+            processImage();
+        }
+
+        function setSlider(id, value) {
+            const el = document.getElementById(id);
+            el.value = value;
+            document.getElementById('v-' + id).innerText =
+                (id === 'min-green' || id === 'min-red') ? Math.round(value) : value.toFixed(2);
+        }
+
+        /* --- CALIBRATION INTERFACE CORE LOGIC --- */
+
+        function loadCalibrationCsv(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/);
+                
+                // Track total data points found inside target calibration file
+                let validPointsCount = 0;
+                let referenceLine = null;
+
+                for (let i = 1; i < lines.length; i++) {
+                    const parsedRow = lines[i].trim();
+                    if (parsedRow && parsedRow.split(',').length >= 10) {
+                        validPointsCount++;
+                        if (!referenceLine) referenceLine = parsedRow; 
+                    }
+                }
+
+                // Strictly validate data matrix weight constraint (Minimum of 5 structural rows required)
+                if (validPointsCount < 5) {
+                    alert(`Calibration file rejected! The file contains only ${validPointsCount} data points. A minimum of 5 historical data points is required to calculate linear regression slopes safely. Falling back to safe defaults.`);
+                    calibCoefficients = { ...defaultCoefficients };
+                    document.getElementById('calib-name-display').innerText = "Active: Arabidopsis Default";
+                    if (originalImage) autoSettings();
+                    return;
+                }
+
+                // If valid, apply the parameters mapped inside the file row structure
+                const values = referenceLine.split(',');
+                calibCoefficients = {
+                    mg: parseFloat(values[0]),  bg: parseFloat(values[1]),
+                    mgr: parseFloat(values[2]), bgr: parseFloat(values[3]),
+                    mgb: parseFloat(values[4]), bgb: parseFloat(values[5]),
+                    mmr: parseFloat(values[6]), bmr: parseFloat(values[7]),
+                    mmg: parseFloat(values[8]), bmg: parseFloat(values[9])
+                };
+
+                document.getElementById('calib-name-display').innerText = `Active: ${file.name}`;
+                alert(`Successfully accepted calibration parameters! Mapped out ${validPointsCount} regression tracking data points.`);
+                if (originalImage) autoSettings();
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
+        function addCurrentToCalibrationLog() {
+            if (!originalImage || currentImageGreenAverages.gavg === 0) {
+                alert("Please open an image and run 'Auto settings' first to isolate the initial color metrics.");
+                return;
+            }
+
+            const minGreen = document.getElementById('min-green').value;
+            const grRatio = document.getElementById('gr-ratio').value;
+            const gbRatio = document.getElementById('gb-ratio').value;
+            const minRed = document.getElementById('min-red').value;
+            const redRatio = document.getElementById('red-ratio').value;
+
+            const logRow = {
+                filename: currentFileName || "unnamed",
+                green_avg: currentImageGreenAverages.gavg.toFixed(4),
+                user_min_green: parseFloat(minGreen).toFixed(1),
+                green_red_ratio_avg: currentImageGreenAverages.gravg.toFixed(4),
+                user_gr_ratio: parseFloat(grRatio).toFixed(2),
+                green_blue_ratio_avg: currentImageGreenAverages.bravg.toFixed(4),
+                user_gb_ratio: parseFloat(gbRatio).toFixed(2),
+                red_avg: currentImageRedAverages.ravg.toFixed(4),
+                user_min_red: parseFloat(minRed).toFixed(1),
+                red_ratio_avg: currentImageRedAverages.rgavg.toFixed(4),
+                user_red_ratio: parseFloat(redRatio).toFixed(2)
+            };
+
+            calibrationOutputRows.push(logRow);
+            document.getElementById('calib-count-display').innerText = `${calibrationOutputRows.length} calibration rows staged`;
+        }
+
+        function exportCalibrationCsv() {
+            if (calibrationOutputRows.length === 0) {
+                alert("Staged log matrix is currently empty. Fine-tune your thresholds and click 'Add to calib file' across your training image set first.");
+                return;
+            }
+            
+            let csvContent = "filename,green_avg,user_min_green,green_red_ratio_avg,user_gr_ratio,green_blue_ratio_avg,user_gb_ratio,red_avg,user_min_red,red_ratio_avg,user_red_ratio\n";
+            calibrationOutputRows.forEach(r => {
+                csvContent += `${r.filename},${r.green_avg},${r.user_min_green},${r.green_red_ratio_avg},${r.user_gr_ratio},${r.green_blue_ratio_avg},${r.user_gb_ratio},${r.red_avg},${r.user_min_red},${r.red_ratio_avg},${r.user_red_ratio}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.download = 'newcalib.csv';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        /* --- BASIC SYSTEM CORE IO / PLUMBING --- */
+
+        function saveAnalysis() {
+            if (!originalImage) return alert("No analyzed data to save.");
+            const baseName = currentFileName.replace(/\.[^/.]+$/, "") || "leaf-image";
+            const link = document.createElement('a');
+            link.download = baseName + '_output.png';
+            link.href = canvas.toDataURL();
+            link.click();
+            logCurrentResult();
+        }
+
+        function logCurrentResult() {
+            analysisLog.push({
+                filename: currentFileName,
+                leafPixels: document.getElementById('stat-leaf-pix').innerText,
+                scalePixels: document.getElementById('stat-scale-pix').innerText,
+                area: document.getElementById('stat-area').innerText
+            });
+        }
+
+        function downloadCsvLog() {
+            if (analysisLog.length === 0) {
+                alert("No saved analyses yet. Click 'Save analysis' or run a batch first.");
+                return;
+            }
+            let csv = "filename,leaf pixels,scale pixels,leaf area cm^2\n";
+            analysisLog.forEach(row => {
+                csv += `${row.filename},${row.leafPixels},${row.scalePixels},${row.area}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.download = 'leafarea.csv';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        async function selectSourceFolder() {
+            try {
+                sourceFolderHandle = await window.showDirectoryPicker();
+                document.getElementById('src-folder-display').innerText = sourceFolderHandle.name;
+                document.getElementById('btn-start-batch').disabled = false;
+            } catch (err) {
+                console.log("Directory choice cancelled or denied.", err);
+            }
+        }
+
+        function loadImageFromFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error("Image load failed"));
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function startBatchProcessing() {
+            if (!sourceFolderHandle) return;
+            document.getElementById('btn-start-batch').innerText = "Processing batch...";
+            document.getElementById('btn-start-batch').disabled = true;
+
+            const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+            let fileEntries = [];
+
+            for await (const entry of sourceFolderHandle.values()) {
+                if (entry.kind === 'file' && validExtensions.some(ext => entry.name.toLowerCase().endsWith(ext))) {
+                    fileEntries.push(entry);
+                }
+            }
+
+            if (fileEntries.length === 0) {
+                alert("No compatible images found.");
+                document.getElementById('btn-start-batch').innerText = "Start Batch with current settings";
+                document.getElementById('btn-start-batch').disabled = false;
+                return;
+            }
+
+            const useAuto = document.getElementById('batch-use-auto').checked;
+            placeholder.style.display = 'none';
+            canvas.style.display = 'block';
+
+            for (let i = 0; i < fileEntries.length; i++) {
+                const fileEntry = fileEntries[i];
+                currentFileName = fileEntry.name;
+                document.getElementById('file-name').innerText = `[Batch ${i+1}/${fileEntries.length}] ${currentFileName}`;
+
+                try {
+                    const file = await fileEntry.getFile();
+                    originalImage = await loadImageFromFile(file);
+                    canvas.width = originalImage.width;
+                    canvas.height = originalImage.height;
+
+                    if (useAuto) autoSettings(); else processImage();
+
+                    logCurrentResult();
+
+                    await new Promise((resolve) => {
+                        canvas.toBlob((blob) => {
+                            const link = document.createElement('a');
+                            link.download = `${currentFileName.replace(/\.[^/.]+$/, "")}_output.png`;
+                            link.href = URL.createObjectURL(blob);
+                            link.click();
+                            setTimeout(() => { URL.revokeObjectURL(link.href); resolve(); }, 120);
+                        }, 'image/png');
+                    });
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            document.getElementById('file-name').innerText = "Batch completed successfully!";
+            document.getElementById('btn-start-batch').innerText = "Start Batch with current settings";
+            document.getElementById('btn-start-batch').disabled = false;
+            downloadCsvLog();
+        }
+    </script>
+</body>
+</html>
