@@ -13,19 +13,16 @@ If you have any questions or concerns about this Privacy Policy or our practices
 
 June 2026 - Added EasyLeafArea.html and elaScanner.html. Now you should be able to run it on most any browser without installing python. Just download and open it with your favorite browser.
 
-April 11 2023 - Easy Leaf Area is now available in the App Store for iPhone
+April 2023 - Easy Leaf Area is now available in the App Store for iPhone
 https://apps.apple.com/us/app/easy-leaf-area/id6447322411
 
-April 14 2023 - Canopy Cover is now available in the App Store for iPhone
+April 2023 - Canopy Cover is now available in the App Store for iPhone
 https://apps.apple.com/us/app/canopy-cover/id6447323877
 
 Easy Leaf Area App tutorial: https://www.youtube.com/watch?v=HePyToRoa84&t
 Canopy Cover App tutorial: https://www.youtube.com/watch?v=oNxopqB1qY0&t
 
 2023 updates completed for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
-
-Android apps compatible with newer phones will be released later this year.
-
 
 Easy Leaf Area Free and Canopy Cover Free are now available for android devices.
 https://play.google.com/store/apps/details?id=com.heaslon.EasyLeafArea
@@ -38,7 +35,7 @@ Easy leaf area is free, open source, software that rapidly measures leaf area in
 GETTING STARTED:
 This program analyzes single jpeg or tiff images or batches of images for leaf area.  Images must have a red scale of known area in the image in the same plane as the leaves for the program to use as a reference scale.  
 
-Windows (2024 updated): ela.exe no longer works on some PCs with Windows 10 or Windows 11.  You will probably need to install python and run the script.  I would suggest using elaWin2023.py compatible with Python 3.  Use ChatGPT for instructions on installing Scipy, Numpy, Pillow
+Windows (updated 2026): ela.exe no longer works on some PCs with Windows 10 or Windows 11.  You can now use the html versions of EasyLeafArea.
 
 Windows (old instructions):
 Download EasyLeafArea.zip and unzip the folder.  https://github.com/heaslon/Easy-Leaf-Area/blob/master/EasyLeafArea.zip .  To download the file click 'view the full file'.  To begin the program, Run ela.exe or ela.py (requires installation of Python® 2.7 ("Python" is a registered trademark of the Python Software Foundation”), Scipy, and Numpy, but you can modify the script to suit your needs).
