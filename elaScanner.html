@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Leaf Area - Scanner Edition</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #2c2c2e;
+            color: #ffffff;
+            margin: 0;
+            padding: 10px;
+            font-size: 13px;
+            user-select: none;
+        }
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #f2f2f7;
+        }
+        .meta-info {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 500;
+            color: #e5e5ea;
+        }
+        .processing-indicator {
+            color: #ff9500 !important;
+            font-weight: bold;
+            animation: blink 1.2s infinite;
+        }
+        @keyframes blink { 0% {opacity: 0.4;} 50% {opacity: 1;} 100% {opacity: 0.4;} }
+        
+        .container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .panel {
+            background: #1c1c1e;
+            border: 1px solid #3a3a3c;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .left-panel { width: 220px; display: flex; flex-direction: column; gap: 10px; }
+        .center-panel { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
+        .right-panel { width: 280px; display: flex; flex-direction: column; gap: 12px; }
+        
+        button {
+            background-color: #2c2c2e;
+            color: #ffffff;
+            border: 1px solid #48484a;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #3a3a3c; }
+        button:active { background-color: #48484a; }
+        button:disabled { background-color: #1c1c1e; color: #aeaeae; cursor: not-allowed; border-color: #2c2c2e; }
+        
+        .checkbox-group { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .checkbox-group input[type="checkbox"] { cursor: pointer; }
+        
+        .batch-section { border-top: 1px dashed #48484a; margin-top: 10px; padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .batch-title { font-weight: bold; font-size: 12px; color: #aeaeae; }
+        .path-display { font-family: monospace; color: #0a84ff; font-size: 11px; padding-left: 5px; word-break: break-all; font-weight: 600; }
+
+        .slider-block { display: flex; flex-direction: column; gap: 2px; }
+        .slider-label { font-weight: 500; text-align: center; font-size: 12px; color: #e5e5ea; }
+        .slider-val { text-align: center; font-weight: bold; color: #0a84ff; font-size: 13px; }
+        input[type="range"] { width: 100%; margin: 4px 0; cursor: pointer; }
+        .slider-ticks { display: flex; justify-content: space-between; font-size: 10px; color: #8e8e93; padding: 0 2px; }
+
+        #canvas-container {
+            border: 2px dashed #48484a;
+            background: #1c1c1e;
+            width: 100%;
+            max-width: 700px;
+            min-height: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: auto;
+            border-radius: 4px;
+        }
+        #canvas-placeholder {
+            color: #8e8e93;
+            font-weight: 500;
+            text-align: center;
+            padding: 20px;
+        }
+        canvas { max-width: 100%; height: auto; display: none; background: #ffffff; }
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">Easy Leaf Area (Scanner Edition)</div>
+    <div class="meta-info">
+        <span id="file-name">No file loaded</span><span id="status-spinner"></span> &nbsp;|&nbsp; 
+        Leaf pix: <span id="stat-leaf-pix">0</span> &nbsp;|&nbsp; 
+        Scale pix: <span id="stat-scale-pix">0</span> &nbsp;|&nbsp; 
+        Leaf area: <span id="stat-area">0.00</span> cm^2 &nbsp;|&nbsp;
+        Length: <span id="stat-length">0</span> mm
+    </div>
+
+    <div class="container">
+        <div class="panel left-panel">
+            <button type="button" id="btn-open" onclick="triggerOpen()">Open an image</button>
+            <input type="file" id="file-input" accept="image/*">
+            
+            <button type="button" id="btn-save" onclick="saveAnalysis()">Save analysis</button>
+            
+            <div class="checkbox-group"><input type="checkbox" id="flip-h" onchange="queueProcessing()"><label for="flip-h">Flip image horizontal</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="rotate-180" onchange="queueProcessing()"><label for="rotate-180">Rotate image 180 deg</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="del-bg" onchange="queueProcessing()"><label for="del-bg">Delete background</label></div>
+            
+            <div class="batch-section">
+                <div class="batch-title">Batch Processing:</div>
+                <button type="button" id="btn-src-folder" onclick="selectSourceFolder()">Select batch source Folder</button>
+                <div class="path-display" id="src-folder-display">None selected</div>
+                
+                <button type="button" id="btn-start-batch" onclick="startBatchProcessing()" style="font-weight: bold; border-color: #30d158; color: #30d158;" disabled>Start Batch with current settings</button>
+            </div>
+        </div>
+
+        <div class="center-panel">
+            <div style="margin-bottom: 8px; display: flex; gap: 15px; align-items: center;">
+                <button type="button" onclick="downloadCsvLog()">Open output csv file</button>
+                <div class="checkbox-group"><input type="checkbox" id="label-pixels" checked onchange="queueProcessing()"><label for="label-pixels">Label Pixels</label></div>
+            </div>
+            <div id="canvas-container">
+                <div id="canvas-placeholder">Use "Open an image" on the left panel to begin</div>
+                <canvas id="mainCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="checkbox-group" style="background: #1c1c1e; padding: 6px; border-radius: 4px; border: 1px solid #48484a; margin-bottom: 5px;">
+                <input type="checkbox" id="speed-optimized" checked onchange="updateScaleAndProcess()">
+                <label for="speed-optimized" style="font-weight: bold; color: #30d158;">Optimized Speed (Resize Scans)</label>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Scanner threshold:</div>
+                <div class="slider-val" id="v-scanner-thresh">125</div>
+                <input type="range" id="scanner-thresh" min="0" max="250" step="1" value="125" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Scale minimum Red RGB value:</div>
+                <div class="slider-val" id="v-min-red">200</div>
+                <input type="range" id="min-red" min="0" max="250" step="5" value="200" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Scale Red Ratio: (R/G & R/B)</div>
+                <div class="slider-val" id="v-red-ratio">1.20</div>
+                <input type="range" id="red-ratio" min="1.00" max="2.00" step="0.01" value="1.20" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>1.0</span><span>1.5</span><span>2.0</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Scale area (cm^2):</div>
+                <div class="slider-val" id="v-scale-area">4.0</div>
+                <input type="range" id="scale-area" min="0.0" max="20.0" step="0.5" value="4.0" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span>0</span><span>4</span><span>8</span><span>12</span><span>16</span><span>20</span></div>
+            </div>
+
+            <div class="slider-block">
+                <div class="slider-label">Minimum Leaf Size (pixels):</div>
+                <div class="slider-val" id="v-min-size">2000</div>
+                <input type="range" id="min-size" min="1" max="5000" step="50" value="2000" oninput="updateSliderVal(this)">
+                <div class="slider-ticks"><span id="tick-min">1</span><span id="tick-max">5000</span></div>
+            </div>
+            
+            <div class="checkbox-group"><input type="checkbox" id="ignore-edges" checked onchange="queueProcessing()"><label for="ignore-edges">Ignore edge artifacts</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="one-leaf" onchange="queueProcessing()"><label for="one-leaf">Only one Leaf component</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="one-scale" checked onchange="queueProcessing()"><label for="one-scale">Only one Scale component</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="measure-length" checked onchange="queueProcessing()"><label for="measure-length">Measure Leaf Length</label></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const fileInput = document.getElementById('file-input');
+        const placeholder = document.getElementById('canvas-placeholder');
+        const spinner = document.getElementById('status-spinner');
+        
+        let originalImage = null;
+        let currentFileName = '';
+        let analysisLog = []; 
+        let isProcessing = false;
+        let activeScaleFactor = null; 
+
+        let sourceFolderHandle = null;
+
+        function triggerOpen() { fileInput.click(); }
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            currentFileName = file.name;
+            document.getElementById('file-name').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    placeholder.style.display = 'none';
+                    canvas.style.display = 'block';
+                    activeScaleFactor = null;
+                    updateScaleAndProcess();
+                };
+                originalImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function updateScaleAndProcess() {
+            if (!originalImage) return;
+
+            const optimize = document.getElementById('speed-optimized').checked;
+            const maxDimension = 1600;
+            const oldScaleFactor = activeScaleFactor;
+
+            let targetScale = 1.0;
+            if (optimize && (originalImage.width > maxDimension || originalImage.height > maxDimension)) {
+                if (originalImage.width > originalImage.height) {
+                    targetScale = maxDimension / originalImage.width;
+                } else {
+                    targetScale = maxDimension / originalImage.height;
+                }
+            }
+            activeScaleFactor = targetScale;
+
+            canvas.width = Math.round(originalImage.width * activeScaleFactor);
+            canvas.height = Math.round(originalImage.height * activeScaleFactor);
+
+            const currentMaxDim = Math.max(canvas.width, canvas.height);
+            const dynamicMax = Math.max(100, Math.round((currentMaxDim / 1600) * 5000));
+            
+            const minSizeSlider = document.getElementById('min-size');
+            
+            if (oldScaleFactor === null) {
+                minSizeSlider.max = dynamicMax;
+                minSizeSlider.value = 2000; 
+            } else if (oldScaleFactor !== activeScaleFactor) {
+                const currentVal = parseInt(minSizeSlider.value, 10);
+                const ratio = activeScaleFactor / oldScaleFactor;
+                let updatedVal = Math.max(1, Math.min(dynamicMax, Math.round(currentVal * ratio)));
+                minSizeSlider.max = dynamicMax;
+                minSizeSlider.value = updatedVal;
+            } else {
+                minSizeSlider.max = dynamicMax;
+            }
+
+            document.getElementById('tick-max').innerText = dynamicMax;
+            document.getElementById('v-min-size').innerText = minSizeSlider.value;
+
+            queueProcessing();
+        }
+
+        function updateSliderVal(slider) {
+            document.getElementById('v-' + slider.id).innerText = slider.value;
+            queueProcessing();
+        }
+
+        function queueProcessing() {
+            if (!originalImage || isProcessing) return;
+            
+            isProcessing = true;
+            spinner.innerText = " [Processing...]";
+            spinner.className = "processing-indicator";
+
+            setTimeout(processImage, 30);
+        }
+
+        function processImage() {
+            try {
+                if (!originalImage) return;
+
+                const width = canvas.width;
+                const height = canvas.height;
+
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, width, height);
+
+                let flipH = document.getElementById('flip-h').checked;
+                let rot180 = document.getElementById('rotate-180').checked;
+
+                ctx.translate(width / 2, height / 2);
+                ctx.scale(flipH ? -1 : 1, 1);
+                if (rot180) ctx.rotate(Math.PI);
+                ctx.translate(-width / 2, -height / 2);
+
+                ctx.drawImage(originalImage, 0, 0, width, height);
+
+                const imgData = ctx.getImageData(0, 0, width, height);
+                const data = imgData.data;
+
+                const scannerThresh = parseFloat(document.getElementById('scanner-thresh').value);
+                const minR = parseFloat(document.getElementById('min-red').value);
+                const redThresh = parseFloat(document.getElementById('red-ratio').value);
+                const delBg = document.getElementById('del-bg').checked;
+                const onlyOneLeaf = document.getElementById('one-leaf').checked;
+                const onlyOneScale = document.getElementById('one-scale').checked;
+                const showLabels = document.getElementById('label-pixels').checked;
+                const measureLength = document.getElementById('measure-length').checked;
+                const ignoreEdges = document.getElementById('ignore-edges').checked;
+
+                const minSizeSetting = parseInt(document.getElementById('min-size').value, 10);
+
+                let binaryLeaf = new Uint8Array(width * height);
+                let binaryScale = new Uint8Array(width * height);
+                let visitedLeaf = new Uint8Array(width * height);
+                let visitedScale = new Uint8Array(width * height);
+
+                for (let i = 0; i < data.length; i += 4) {
+                    let idx = i / 4;
+                    let r = data[i];
+                    let g = data[i+1];
+                    let b = data[i+2];
+
+                    if (r >= minR && (r / (g || 1)) >= redThresh && (r / (b || 1)) >= redThresh) {
+                        binaryScale[idx] = 1;
+                    } else {
+                        let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                        if (gray <= scannerThresh) {
+                            binaryLeaf[idx] = 1;
+                        }
+                    }
+                }
+
+                // --- SEGMENT SCALE COMPONENTS ---
+                let scaleComponents = [];
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let idx = y * width + x;
+                        if (binaryScale[idx] === 1 && visitedScale[idx] === 0) {
+                            let compPixels = [];
+                            let queue = [idx];
+                            let qHead = 0;
+                            visitedScale[idx] = 1;
+
+                            while (qHead < queue.length) {
+                                let currIdx = queue[qHead++];
+                                compPixels.push(currIdx);
+                                let cx = currIdx % width;
+                                let cy = Math.floor(currIdx / width);
+
+                                const neighbors = [
+                                    {nx: cx+1, ny: cy}, {nx: cx-1, ny: cy},
+                                    {nx: cx, ny: cy+1}, {nx: cx, ny: cy-1}
+                                ];
+                                for (let n of neighbors) {
+                                    if (n.nx >= 0 && n.nx < width && n.ny >= 0 && n.ny < height) {
+                                        let nIdx = n.ny * width + n.nx;
+                                        if (binaryScale[nIdx] === 1 && visitedScale[nIdx] === 0) {
+                                            visitedScale[nIdx] = 1;
+                                            queue.push(nIdx);
+                                        }
+                                    }
+                                }
+                            }
+                            if (compPixels.length > 0) {
+                                scaleComponents.push({ pixels: compPixels, size: compPixels.length });
+                            }
+                        }
+                    }
+                }
+
+                if (onlyOneScale && scaleComponents.length > 1) {
+                    scaleComponents.sort((a, b) => b.size - a.size);
+                    scaleComponents = [scaleComponents[0]];
+                }
+
+                let scalePixels = 0;
+                scaleComponents.forEach(comp => {
+                    scalePixels += comp.size;
+                    comp.pixels.forEach(idx => {
+                        let i = idx * 4;
+                        data[i] = 255; data[i+1] = 0; data[i+2] = 0;
+                    });
+                });
+
+                // --- SEGMENT LEAF COMPONENTS ---
+                let leafComponents = [];
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let idx = y * width + x;
+
+                        if (binaryLeaf[idx] === 1 && visitedLeaf[idx] === 0) {
+                            let compPixels = [];
+                            let queue = [idx];
+                            let qHead = 0;
+                            visitedLeaf[idx] = 1;
+                            
+                            let minX = x, maxX = x, minY = y, maxY = y;
+                            
+                            let totalEdgeCount = 0;
+                            let canvasEdgeTouchCount = 0;
+
+                            while (qHead < queue.length) {
+                                let currIdx = queue[qHead++];
+                                compPixels.push(currIdx);
+
+                                let cx = currIdx % width;
+                                let cy = Math.floor(currIdx / width);
+
+                                if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+                                if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+
+                                const neighbors = [
+                                    {nx: cx+1, ny: cy}, {nx: cx-1, ny: cy},
+                                    {nx: cx, ny: cy+1}, {nx: cx, ny: cy-1}
+                                ];
+
+                                let isEdgePixel = false;
+                                for (let n of neighbors) {
+                                    if (n.nx >= 0 && n.nx < width && n.ny >= 0 && n.ny < height) {
+                                        let nIdx = n.ny * width + n.nx;
+                                        if (binaryLeaf[nIdx] === 0) {
+                                            isEdgePixel = true;
+                                        }
+                                        if (binaryLeaf[nIdx] === 1 && visitedLeaf[nIdx] === 0) {
+                                            visitedLeaf[nIdx] = 1;
+                                            queue.push(nIdx);
+                                        }
+                                    } else {
+                                        isEdgePixel = true; 
+                                    }
+                                }
+
+                                if (isEdgePixel) {
+                                    totalEdgeCount++;
+                                    if (cx <= 2 || cx >= width - 3 || cy <= 2 || cy >= height - 3) {
+                                        canvasEdgeTouchCount++;
+                                    }
+                                }
+                            }
+
+                            if (compPixels.length >= minSizeSetting) {
+                                if (ignoreEdges && totalEdgeCount > 0) {
+                                    let edgeRatio = canvasEdgeTouchCount / totalEdgeCount;
+                                    if (edgeRatio > 0.15) {
+                                        continue; 
+                                    }
+                                }
+
+                                leafComponents.push({
+                                    size: compPixels.length,
+                                    pixels: compPixels,
+                                    centerX: Math.floor((minX + maxX) / 2),
+                                    centerY: Math.floor((minY + maxY) / 2),
+                                    rawCoords: compPixels.map(pIdx => ({x: pIdx % width, y: Math.floor(pIdx / width)}))
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (onlyOneLeaf && leafComponents.length > 1) {
+                    leafComponents.sort((a, b) => b.size - a.size);
+                    leafComponents = [leafComponents[0]];
+                }
+
+                if (delBg) {
+                    for (let i = 0; i < data.length; i += 4) {
+                        let idx = i / 4;
+                        let matchesLeaf = leafComponents.some(comp => binaryLeaf[idx] === 1 && visitedLeaf[idx] === 1);
+                        let matchesScale = scaleComponents.some(comp => binaryScale[idx] === 1);
+                        if (!matchesLeaf && !matchesScale) {
+                            data[i] = 255; data[i+1] = 255; data[i+2] = 255;
+                        }
+                    }
+                }
+
+                let finalLeafPixelsCount = 0;
+                leafComponents.forEach(comp => {
+                    finalLeafPixelsCount += comp.size;
+                    comp.pixels.forEach(idx => {
+                        let i = idx * 4;
+                        data[i] = 0; data[i+1] = 255; data[i+2] = 0;
+                    });
+                });
+
+                ctx.putImageData(imgData, 0, 0);
+
+                const scaleAreaSetting = parseFloat(document.getElementById('scale-area').value);
+                let computedArea = 0;
+                let pixelToMmRatio = 0; 
+
+                if (scalePixels > 0) {
+                    computedArea = (finalLeafPixelsCount / scalePixels) * scaleAreaSetting;
+                    let totalScaleMm2 = scaleAreaSetting * 100; 
+                    let mm2PerPixel = totalScaleMm2 / scalePixels;
+                    pixelToMmRatio = Math.sqrt(mm2PerPixel);
+                }
+
+                let maxGlobalLengthMm = 0;
+
+                leafComponents.forEach(comp => {
+                    let maxDistPx = 0;
+                    
+                    if (measureLength && comp.rawCoords.length > 1) {
+                        let stride = comp.rawCoords.length > 2000 ? Math.floor(comp.rawCoords.length / 120) : 1;
+                        let coords = [];
+                        for(let k=0; k<comp.rawCoords.length; k+=stride) {
+                            coords.push(comp.rawCoords[k]);
+                        }
+
+                        for (let m = 0; m < coords.length; m++) {
+                            for (let n = m + 1; n < coords.length; n++) {
+                                let dx = coords[m].x - coords[n].x;
+                                let dy = coords[m].y - coords[n].y;
+                                let distSq = dx * dx + dy * dy;
+                                if (distSq > maxDistPx) {
+                                    maxDistPx = distSq;
+                                }
+                            }
+                        }
+                        maxDistPx = Math.sqrt(maxDistPx);
+                    }
+
+                    let componentLengthMm = maxDistPx * pixelToMmRatio;
+                    if (componentLengthMm > maxGlobalLengthMm) maxGlobalLengthMm = componentLengthMm;
+
+                    if (showLabels) {
+                        ctx.fillStyle = "black";
+                        ctx.font = "bold 12px sans-serif";
+                        ctx.textAlign = "center";
+                        
+                        if (measureLength && componentLengthMm > 0) {
+                            ctx.fillText(`${componentLengthMm.toFixed(0)} mm`, comp.centerX, comp.centerY - 4);
+                            ctx.fillText(`${((comp.size / (scalePixels || 1)) * scaleAreaSetting).toFixed(3)} cm^2`, comp.centerX, comp.centerY + 10);
+                        } else {
+                            ctx.fillText(comp.size, comp.centerX, comp.centerY);
+                        }
+                    }
+                });
+
+                const outputLeafPixels = Math.round(finalLeafPixelsCount / (activeScaleFactor * activeScaleFactor));
+                const outputScalePixels = Math.round(scalePixels / (activeScaleFactor * activeScaleFactor));
+
+                document.getElementById('stat-leaf-pix').innerText = outputLeafPixels;
+                document.getElementById('stat-scale-pix').innerText = outputScalePixels;
+                document.getElementById('stat-area').innerText = computedArea.toFixed(2);
+                document.getElementById('stat-length').innerText = maxGlobalLengthMm.toFixed(0);
+
+            } finally {
+                isProcessing = false;
+                spinner.innerText = "";
+                spinner.className = "";
+            }
+        }
+
+        function setSlider(id, value) {
+            const el = document.getElementById(id);
+            el.value = value;
+            document.getElementById('v-' + id).innerText =
+                (id === 'scanner-thresh' || id === 'min-red') ? Math.round(value) : value.toFixed(2);
+        }
+
+        function saveAnalysis() {
+            if (!originalImage) return alert("No analyzed data to save.");
+            const baseName = currentFileName.replace(/\.[^/.]+$/, "") || "leaf-image";
+            const link = document.createElement('a');
+            link.download = baseName + '_scanner_output.png';
+            link.href = canvas.toDataURL();
+            link.click();
+            logCurrentResult();
+        }
+
+        function logCurrentResult() {
+            analysisLog.push({
+                filename: currentFileName,
+                leafPixels: document.getElementById('stat-leaf-pix').innerText,
+                scalePixels: document.getElementById('stat-scale-pix').innerText,
+                area: document.getElementById('stat-area').innerText,
+                length: document.getElementById('stat-length').innerText
+            });
+        }
+
+        function downloadCsvLog() {
+            if (analysisLog.length === 0) {
+                alert("No saved analyses yet.");
+                return;
+            }
+            let csv = "filename,leaf pixels,scale pixels,leaf area cm^2,max length mm\n";
+            analysisLog.forEach(row => {
+                csv += `${row.filename},${row.leafPixels},${row.scalePixels},${row.area},${row.length}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.download = 'leafarea_scanner.csv';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        /* --- BATCH PROCESSING --- */
+        async function selectSourceFolder() {
+            try {
+                sourceFolderHandle = await window.showDirectoryPicker();
+                document.getElementById('src-folder-display').innerText = sourceFolderHandle.name;
+                checkBatchButtonState();
+            } catch (err) { console.log(err); }
+        }
+
+        function checkBatchButtonState() {
+            document.getElementById('btn-start-batch').disabled = !sourceFolderHandle;
+        }
+
+        function loadImageFromFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function startBatchProcessing() {
+            if (!sourceFolderHandle) return;
+            document.getElementById('btn-start-batch').innerText = "Processing...";
+            
+            const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+            let fileEntries = [];
+
+            for await (const entry of sourceFolderHandle.values()) {
+                if (entry.kind === 'file' && validExtensions.some(ext => entry.name.toLowerCase().endsWith(ext))) {
+                    fileEntries.push(entry);
+                }
+            }
+
+            placeholder.style.display = 'none';
+            canvas.style.display = 'block';
+
+            for (let i = 0; i < fileEntries.length; i++) {
+                const fileEntry = fileEntries[i];
+                currentFileName = fileEntry.name;
+                document.getElementById('file-name').innerText = `[Batch ${i+1}/${fileEntries.length}] ${currentFileName}`;
+
+                try {
+                    const file = await fileEntry.getFile();
+                    originalImage = await loadImageFromFile(file);
+                    
+                    activeScaleFactor = null; 
+                    updateScaleAndProcess();
+                    processImage();
+
+                    logCurrentResult();
+
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    const outFileName = `${currentFileName.replace(/\.[^/.]+$/, "")}_scanner_out.png`;
+                    
+                    // Save processed images directly back into the source directory
+                    const newFileHandle = await sourceFolderHandle.getFileHandle(outFileName, { create: true });
+                    const writableStream = await newFileHandle.createWritable();
+                    await writableStream.write(blob);
+                    await writableStream.close();
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            document.getElementById('file-name').innerText = "Batch complete!";
+            document.getElementById('btn-start-batch').innerText = "Start Batch with current settings";
+            downloadCsvLog();
+        }
+    </script>
+</body>
+</html>
