@@ -13,6 +13,8 @@ If you have any questions or concerns about this Privacy Policy or our practices
 
 June 2026 - Added EasyLeafArea.html and elaScanner.html. Now you should be able to run it on most any browser without installing python. Just download and open it with your favorite browser.
 
+The Scanner edition is for white backgrounds. Leaf pixels are identified based on grayscale threshold so it works with other colors of leaves. it still uses red pixel counts for scale area. If you have red leaves you would like to measure, you can use a blue scale and feed the html file to your favorite LLM and ask it to change the red scale to blue.  
+
 April 2023 - Easy Leaf Area is now available in the App Store for iPhone
 https://apps.apple.com/us/app/easy-leaf-area/id6447322411
 
