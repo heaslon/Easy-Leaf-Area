@@ -31,7 +31,7 @@ Canopy Cover App tutorial: https://www.youtube.com/watch?v=oNxopqB1qY0&t
 
 2023 updates completed for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
 
-Update 2026: Android versions do not work on newer Android devices. Use the html versions insteas. 
+Update 2026: Android versions do not work on newer Android devices. Use the html versions instead. 
 Easy Leaf Area Free and Canopy Cover Free are available for android devices if you have a very old android device.
 https://play.google.com/store/apps/details?id=com.heaslon.EasyLeafArea
 https://play.google.com/store/apps/details?id=com.heaslon.canopycover
