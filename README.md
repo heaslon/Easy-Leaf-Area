@@ -11,7 +11,7 @@ Easy Leaf Area Free and Canopy Cover Free require camera and location access in 
 Contact Us
 If you have any questions or concerns about this Privacy Policy or our practices with respect to your personal information, please contact me at heaslon@gmail.com. 
 
-July 2026 - Added an html version of Canopy Cover you can run from your mobile device: https://heaslon.github.io/CanopyCover/CanopyCover.html. 
+July 2026 - Added CanopyCover.html you can run from your mobile device: https://heaslon.github.io/CanopyCover/CanopyCover.html. 
 You can also download the html version, but the lat long will not work on mobile devices if you open the html locally.
 
 June 2026 - Added EasyLeafArea.html and elaScanner.html. Now you should be able to run it on most any browser without installing python. 
@@ -31,9 +31,9 @@ Canopy Cover App tutorial: https://www.youtube.com/watch?v=oNxopqB1qY0&t
 
 2023 updates completed for Python scripts.  These updates should fix compatibility issues with Python 3, windows 10 or 11, and Mac OS.  
 
-Easy Leaf Area Free and Canopy Cover Free are now available for android devices.
+Update 2026: Android versions do not work on newer Android devices. Use the html versions insteas. 
+Easy Leaf Area Free and Canopy Cover Free are available for android devices if you have a very old android device.
 https://play.google.com/store/apps/details?id=com.heaslon.EasyLeafArea
-
 https://play.google.com/store/apps/details?id=com.heaslon.canopycover
 
 WHAT IS EASY LEAF AREA?
