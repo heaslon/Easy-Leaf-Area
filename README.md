@@ -14,7 +14,10 @@ If you have any questions or concerns about this Privacy Policy or our practices
 July 2026 - Added CanopyCover.html you can run from your mobile device: https://heaslon.github.io/CanopyCover/CanopyCover.html. 
 You can also download the html version, but the lat long will not work on mobile devices if you open the html locally.
 
-June 2026 - Added EasyLeafArea.html and elaScanner.html. Now you should be able to run it on most any browser without installing python. 
+June 2026 - Added EasyLeafArea.html and elaScanner.html. 
+http://heaslon.github.io/Easy-Leaf-Area/EasyLeafArea.html
+http://heaslon.github.io/Easy-Leaf-Area/elaScanner.html
+Now you should be able to run it on most any browser without installing python. 
 Just download and open it with your favorite browser.
 
 The Scanner edition is for white backgrounds. Leaf pixels are identified based on grayscale threshold so it works with other colors of leaves. 
