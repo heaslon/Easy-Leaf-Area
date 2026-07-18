@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Easy Leaf Area</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-green: #00e676;
+            --accent-red: #ff1744;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-panel {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        /* Top Action Row */
+        .action-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        button#captureBtn { background-color: #333; }
+        button#captureBtn:active { background-color: #444; }
+        
+        button#helpBtn { background-color: #555; }
+        button#helpBtn:active { background-color: #444; }
+
+        .checkbox-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #ccc;
+            cursor: pointer;
+            user-select: none;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .checkbox-container input {
+            width: 18px;
+            height: 18px;
+            margin-bottom: 4px;
+            accent-color: #00b0ff;
+            cursor: pointer;
+        }
+
+        /* Instructions Panel Style */
+        .instructions-panel {
+            background-color: #2a2a2a;
+            border-left: 4px solid var(--accent-green);
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            display: block;
+        }
+
+        .result-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            margin: 6px 0 12px 0;
+            text-align: center;
+        }
+
+        /* Dual Column Slider Grid matching Original Layout */
+        .slider-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .slider-container {
+            width: 100%;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            margin-bottom: 3px;
+            color: #aaa;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+            background: #444;
+        }
+
+        /* Custom track gradients mimicking the original screenshots */
+        #sliderG1::-webkit-slider-runnable-track { background: linear-gradient(to right, #000, #00e676); height: 10px; border-radius: 4px; }
+        #sliderG2::-webkit-slider-runnable-track { background: linear-gradient(to right, #ffd54f, #81c784); height: 10px; border-radius: 4px; }
+        #sliderG3::-webkit-slider-runnable-track { background: linear-gradient(to right, #4fc3f7, #00e676); height: 10px; border-radius: 4px; }
+        
+        #sliderR1::-webkit-slider-runnable-track { background: linear-gradient(to right, #000, #ff1744); height: 10px; border-radius: 4px; }
+        #sliderR2::-webkit-slider-runnable-track { background: linear-gradient(to right, #fff, #ff8a80); height: 10px; border-radius: 4px; }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00b0ff;
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .canvas-container {
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            margin-top: 5px;
+        }
+
+        canvas {
+            width: 100%;
+            max-height: 50vh; /* Scaled to prevent scrolling on tall screens */
+            object-fit: contain;
+            border-radius: 6px;
+            background-color: #1a1a1a;
+            display: block;
+        }
+
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header-panel">
+        
+        <!-- Action Row -->
+        <div class="action-row">
+            <button id="captureBtn" onclick="triggerCamera()">Open Camera</button>
+            <button id="helpBtn" onclick="toggleHelp()">Help</button>
+            <label class="checkbox-container">
+                <input type="checkbox" id="deleteBg" onchange="processImage()">
+                Delete Background
+            </label>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" capture="environment">
+
+        <!-- Help instructions from original app screenshot -->
+        <div class="instructions-panel" id="helpPanel">
+            Tap <strong>'Open Camera'</strong> to take a picture. Make sure the <strong>4 cm²</strong> red scale area and leaf are the same distance from the camera and are parallel to the camera. Move sliders to adjust leaf and scale identification.
+        </div>
+
+        <div class="result-display" id="resultText">Total Leaf Area = 0.00 cm²</div>
+
+        <!-- Slider Grid (Green on Left, Red on Right) -->
+        <div class="slider-grid">
+            
+            <!-- Green Channels (Leaf) -->
+            <div class="slider-group">
+                <div class="slider-container">
+                    <label id="lblG1">Min Green: 141</label>
+                    <input type="range" id="sliderG1" min="0" max="255" step="1" value="141">
+                </div>
+                <div class="slider-container">
+                    <label id="lblG2">G/R Ratio: 1.18</label>
+                    <input type="range" id="sliderG2" min="0.8" max="1.8" step="0.01" value="1.18">
+                </div>
+                <div class="slider-container">
+                    <label id="lblG3">G/B Ratio: 1.63</label>
+                    <input type="range" id="sliderG3" min="0.8" max="1.8" step="0.01" value="1.63">
+                </div>
+            </div>
+
+            <!-- Red Channels (Calibration Scale) -->
+            <div class="slider-group">
+                <div class="slider-container">
+                    <label id="lblR1">Min Red: 129</label>
+                    <input type="range" id="sliderR1" min="0" max="255" step="1" value="129">
+                </div>
+                <div class="slider-container">
+                    <label id="lblR2">R/G & R/B Ratio: 1.11</label>
+                    <input type="range" id="sliderR2" min="1.0" max="2.0" step="0.01" value="1.11">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let originalImgData = null;
+
+    function triggerCamera() {
+        document.getElementById('helpPanel').style.display = "none";
+        document.getElementById('fileInput').click();
+    }
+
+    function toggleHelp() {
+        const panel = document.getElementById('helpPanel');
+        panel.style.display = (panel.style.display === "none") ? "block" : "none";
+    }
+
+    // Load selected image
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const maxDim = 1200;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height *= maxDim / width;
+                        width = maxDim;
+                    } else {
+                        width *= maxDim / height;
+                        height = maxDim;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                originalImgData = ctx.getImageData(0, 0, width, height);
+                processImage();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Event listeners for sliders
+    const sliders = ['sliderG1', 'sliderG2', 'sliderG3', 'sliderR1', 'sliderR2'];
+    sliders.forEach(id => document.getElementById(id).addEventListener('input', () => {
+        updateLabels();
+        processImage();
+    }));
+
+    function updateLabels() {
+        document.getElementById('lblG1').innerText = `Min Green: ${document.getElementById('sliderG1').value}`;
+        document.getElementById('lblG2').innerText = `G/R Ratio: ${document.getElementById('sliderG2').value}`;
+        document.getElementById('lblG3').innerText = `G/B Ratio: ${document.getElementById('sliderG3').value}`;
+        
+        document.getElementById('lblR1').innerText = `Min Red: ${document.getElementById('sliderR1').value}`;
+        document.getElementById('lblR2').innerText = `R/G & R/B Ratio: ${document.getElementById('sliderR2').value}`;
+    }
+
+    // Core Processing Pipeline
+    function processImage() {
+        if (!originalImgData) return;
+
+        // Leaf thresholds
+        const gMin = parseInt(document.getElementById('sliderG1').value, 10);
+        const grRatio = parseFloat(document.getElementById('sliderG2').value);
+        const gbRatio = parseFloat(document.getElementById('sliderG3').value);
+
+        // Red scale thresholds
+        const rMin = parseInt(document.getElementById('sliderR1').value, 10);
+        const redRatioThreshold = parseFloat(document.getElementById('sliderR2').value);
+
+        const deleteBg = document.getElementById('deleteBg').checked;
+
+        const workingData = new ImageData(
+            new Uint8ClampedArray(originalImgData.data),
+            originalImgData.width,
+            originalImgData.height
+        );
+        const data = workingData.data;
+        let greenCount = 0;
+        let redCount = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i+1];
+            const b = data[i+2];
+
+            const r_safe = r === 0 ? 1 : r;
+            const g_safe = g === 0 ? 1 : g;
+            const b_safe = b === 0 ? 1 : b;
+
+            // 1. Identify leaf green pixels
+            const isGreen = (g > gMin) && (g / r_safe > grRatio) && (g / b_safe > gbRatio);
+
+            // 2. Identify calibration scale red pixels: checking R/G and R/B ratios
+            const isRed = (r > rMin) && (r / g_safe > redRatioThreshold) && (r / b_safe > redRatioThreshold);
+
+            if (isGreen) {
+                greenCount++;
+                data[i] = 0;
+                data[i+1] = 255; // Neon green overlay
+                data[i+2] = 0;
+            } else if (isRed) {
+                redCount++;
+                data[i] = 255;   // Bright red overlay
+                data[i+1] = 0;
+                data[i+2] = 0;
+            } else {
+                if (deleteBg) {
+                    // Turn everything else pure white if checked
+                    data[i] = 255;
+                    data[i+1] = 255;
+                    data[i+2] = 255;
+                }
+            }
+        }
+
+        ctx.putImageData(workingData, 0, 0);
+
+        // Calculate and render final area using physical 4 cm² red scale
+        if (redCount > 0) {
+            const totalArea = ((greenCount / redCount) * 4.0).toFixed(2);
+            document.getElementById('resultText').innerText = `Total Leaf Area = ${totalArea} cm²`;
+        } else {
+            document.getElementById('resultText').innerText = `Total Leaf Area = N/A (Red scale not found)`;
+        }
+    }
+</script>
+</body>
+</html>
