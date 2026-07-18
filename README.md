@@ -11,6 +11,8 @@ Easy Leaf Area Free and Canopy Cover Free require camera and location access in 
 Contact Us
 If you have any questions or concerns about this Privacy Policy or our practices with respect to your personal information, please contact me at heaslon@gmail.com. 
 
+July 2026 - Added EasyLeafAreaMobile.html for your mobile device: https://heaslon.github.io/Easy-Leaf-Area/EasyLeafAreaMobile.html
+
 July 2026 - Added CanopyCover.html you can run from your mobile device: https://heaslon.github.io/CanopyCover/CanopyCover.html. 
 You can also download the html version, but the lat long will not work on mobile devices if you open the html locally.
 
